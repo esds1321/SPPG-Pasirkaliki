@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 // @ts-ignore: Next.js handles global CSS imports during build; VS Code may need this suppression.
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "SPPG Pasirkaliki Rawamerta  — Jadwal Draw Winner",
@@ -19,7 +20,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
