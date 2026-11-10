@@ -143,9 +143,37 @@ export default function Home() {
     }, 80);
   };
 
-  const excel = () => {
+  // Fungsi Share Teks Pengumuman ke WhatsApp dengan format baru
+  const shareToWhatsApp = () => {
+    if (!winner) return;
+    const tanggalHariIni = new Date().toLocaleDateString("id-ID");
+    const message = encodeURIComponent(
+      `🏆 *PENGUMUMAN HASIL DRAW Backup  Devisi Kebersihan*\n` +
+      `TANGGAL ${tanggalHariIni}\n\n` +
+      `Selamat kepada:\n` +
+      `👑 *${winner}*\n\n` +
+      `Terima kasih atas partisipasi semuanya!\n` +
+      `BAGI YANG BELUM MENANG BISA MENDAFTAR KEMBALI JIKA SLOT DRAW MASIH ADA DI HARI BERIKUTNYA.\n` +
+      `\n*Berikut  list kerjanya*\n` +
+      `\nNo.Area pemeriksaan Status\n` +
+      `\n1 Area dapur bersih 📝\n` +
+      `\n2 Lantai bersih dan tidak licin 📝\n` +
+      `\n3 Meja kerja bersih 📝\n` +
+      `\n4 Area pencucian bersih 📝\n` +
+      `\n5 Toilet bersih 📝\n` +
+      `\n6 Tempat sampah tidak penuh 📝\n` +
+      `\n7 Saluran pembuangan lancar 📝\n` +
+      `\n8 Area pengemasan bersih 📝\n` +
+      `\n9 Peralatan kebersihan tersimpan rapi 📝\n` +
+      `\n10 Tidak ditemukan tanda-tanda hama 📝\n` +
+      `\n*SPPG Wibawa Pasirkaliki Karawang*\n`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${message}`, "_blank");
+  };
+
+  const exportWinnersExcel = () => {
     if (!records.length) {
-      showNotification("⚠️ Belum ada riwayat draw untuk diunduh!");
+      showNotification("⚠️ Belum ada riwayat pemenang untuk diunduh!");
       return;
     }
 
@@ -159,10 +187,37 @@ export default function Home() {
 
     ws["!cols"] = [{ wch: 8 }, { wch: 25 }, { wch: 28 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Riwayat Gacha");
-    XLSX.writeFile(wb, "hasil-gacha.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Riwayat Pemenang");
+    XLSX.writeFile(wb, "riwayat-pemenang.xlsx");
 
-    showNotification("✅ Berhasil mengunduh riwayat gacha (hasil-gacha.xlsx)");
+    showNotification("✅ Berhasil mengunduh riwayat pemenang (riwayat-pemenang.xlsx)");
+  };
+
+  const exportAllParticipantsExcel = () => {
+    if (!participants.length) {
+      showNotification("⚠️ Belum ada data peserta untuk diexport!");
+      return;
+    }
+
+    const exportData = participants.map((name, index) => {
+      const matchedRecord = records.find(
+        (r) => r.name.toLowerCase() === name.toLowerCase()
+      );
+      return {
+        No: index + 1,
+        "Nama Peserta": name,
+        Status: matchedRecord ? "MENANG (WINNER)" : "BELUM MENANG",
+        "Tanggal & Waktu Menang": matchedRecord ? matchedRecord.date : "-",
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    ws["!cols"] = [{ wch: 6 }, { wch: 25 }, { wch: 20 }, { wch: 28 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Status Peserta");
+    XLSX.writeFile(wb, "status-peserta-gacha.xlsx");
+
+    showNotification("✅ Berhasil mengunduh status peserta (status-peserta-gacha.xlsx)");
   };
 
   const clearHistory = () => {
@@ -203,7 +258,6 @@ export default function Home() {
 
   return (
     <main className="shell">
-      {/* Komponen Notif Mengapung (Toast) */}
       {notification && (
         <div className="toast-notification">
           {notification}
@@ -219,12 +273,12 @@ export default function Home() {
             height={28} 
             style={{ objectFit: "contain", borderRadius: "4px" }}
           />
-          <span>SPPG Pasirkaliki <b>WORK</b></span>
+          <span>SPPG Wibawa Pasirkaliki <b>WORK</b></span>
         </a>
 
         <div className="header-right">
           <div className="tag">
-            {participants.length}/9 · 1 WINNER
+            {participants.length}/9 · 1 SELECTED
           </div>
           <button
             className="theme-toggle-btn"
@@ -241,17 +295,16 @@ export default function Home() {
       </header>
 
       <section className="hero">
-        <small>SECURE RANDOM DRAW SYSTEM</small>
+        <small>SECURE DRAW SYSTEM</small>
         <h1>
-          Who will be the <b>winner?</b>
+          Who will be the <b>Selected?</b>
         </h1>
         <p>Sistem pengundian ketat dengan enkripsi acak dan filter riwayat.</p>
       </section>
 
       <div className="grid">
-        {/* Panel Daftar Peserta (01) */}
         <section className="panel participants-panel">
-          <div className="over">01 / PARTICIPANTS</div>
+          <div className="over">/ PARTICIPANTS</div>
 
           <h2>Daftar peserta</h2>
 
@@ -300,7 +353,6 @@ export default function Home() {
             </button>
           </div>
 
-    {/* Opsi Pengaturan Ketat */}
           <div className="strict-setting">
             <label>
               <input
@@ -319,9 +371,8 @@ export default function Home() {
           </p>
         </section>
 
-        {/* Panel Pengundian (02) */}
         <section className="panel draw-panel">
-          <div className="over">02 / THE DRAW</div>
+          <div className="over">/ THE DRAW</div>
 
           <h2>Pengundian</h2>
 
@@ -347,6 +398,36 @@ export default function Home() {
                   : `Satu nama akan terpilih secara adil dari ${excludeWinners ? eligibleParticipants.length : participants.length} peserta.`}
               </p>
             )}
+
+            {/* Tombol Share ke WhatsApp */}
+            {winner && !drawing && (
+              <button
+                onClick={shareToWhatsApp}
+                style={{
+                  marginTop: "1rem",
+                  background: "#25D366",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "0.6rem 1rem",
+                  fontSize: "0.85rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  width: "100%",
+                  boxShadow: "0 4px 12px rgba(37, 211, 102, 0.3)",
+                  transition: "transform 0.2s ease"
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                </svg>
+                Share Pengumuman ke WhatsApp
+              </button>
+            )}
           </div>
 
           <button
@@ -363,8 +444,8 @@ export default function Home() {
             </p>
           )}
 
-          <button className="export" onClick={excel}>
-            ⇩ Download hasil Excel (.xlsx)
+          <button className="export" onClick={exportWinnersExcel}>
+            ⇩ Download Riwayat Pemenang (.xlsx)
           </button>
 
           <p className="footnote center">
@@ -374,7 +455,7 @@ export default function Home() {
       </div>
 
       <section className="panel history">
-        <div className="over">03 / RECORDS</div>
+        <div className="over">/ RECORDS</div>
 
         <div className="histhead">
           <div className="hist-top">
@@ -383,9 +464,10 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="actions">
-            <button onClick={excel}>⇩ Export Excel</button>
-
+          <div className="actions" style={{ flexWrap: "wrap", gap: "0.5rem" }}>
+            <button onClick={exportWinnersExcel}>⇩ Export Pemenang</button>
+            <button onClick={exportAllParticipantsExcel}>⇩ Export Status (Menang & Belum)</button>
+            
             <button
               className="quiet"
               onClick={clearHistory}
@@ -434,7 +516,7 @@ export default function Home() {
       </section>
 
       <footer>
-        SPPG Pasirkaliki Karawang © {new Date().getFullYear()}
+        SPPG Wibawa Pasirkaliki Karawang © {new Date().getFullYear()}
         <span>Powered DYS917</span>
       </footer>
     </main>

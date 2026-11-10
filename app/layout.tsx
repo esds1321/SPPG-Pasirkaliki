@@ -5,7 +5,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
-  title: "SPPG Pasirkaliki Rawamerta  — Jadwal Draw Winner",
+  title: "SPPG Wibawa Pasirkaliki Rawamerta  — Jadwal Draw Winner",
   description:
     "Undian acak 9 nama dengan satu pemenang dan export Excel.",
   icons: {
